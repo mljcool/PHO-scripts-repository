@@ -75,126 +75,71 @@ PHO_de_Common.Library = {
     },
 
     //--------------------------------------------------------------------------
-    _formContext: null,
-
-    //--------------------------------------------------------------------------
-    setFormContext: function (executionContext) {
-        if (executionContext && typeof executionContext.getFormContext === "function") {
-            this._formContext = executionContext.getFormContext();
-        }
-        else if (executionContext && typeof executionContext.getAttribute === "function" && typeof executionContext.getControl === "function") {
-            this._formContext = executionContext;
-        }
-
-        return this._formContext;
-    },
-
-    //--------------------------------------------------------------------------
-    getFormContext: function () {
-        return this._formContext;
-    },
-
-    //--------------------------------------------------------------------------
-    getAttribute: function (fieldName) {
-        var formContext = this.getFormContext();
-        if (!formContext) return null;
-        return formContext.getAttribute(fieldName);
-    },
-
-    //--------------------------------------------------------------------------
-    getControl: function (fieldName) {
-        var formContext = this.getFormContext();
-        if (!formContext) return null;
-        return formContext.getControl(fieldName);
-    },
-
-    //--------------------------------------------------------------------------
-    getTab: function (tabName) {
-        var formContext = this.getFormContext();
-        if (!formContext || !formContext.ui || !formContext.ui.tabs) return null;
-        return formContext.ui.tabs.get(tabName);
-    },
-
-    //--------------------------------------------------------------------------
-    getAllAttributes: function () {
-        var formContext = this.getFormContext();
-        if (!formContext || !formContext.data || !formContext.data.entity || !formContext.data.entity.attributes) return [];
-        return formContext.data.entity.attributes.get();
-    },
-
-    //--------------------------------------------------------------------------
-    getEntityAttribute: function (attributeName) {
-        var formContext = this.getFormContext();
-        if (!formContext || !formContext.data || !formContext.data.entity || !formContext.data.entity.attributes) return null;
-        return formContext.data.entity.attributes.get(attributeName);
-    },
-
-    //--------------------------------------------------------------------------
     disableField: function (fieldName) {
-        var field = PHO_de_Common.Library.getControl(fieldName);
+        var field = Xrm.Page.ui.controls.get(fieldName);
         if (field != null)
             field.setDisabled(true);
     },
 
     //--------------------------------------------------------------------------
     enableField: function (fieldName) {
-        var field = PHO_de_Common.Library.getControl(fieldName);
+        var field = Xrm.Page.ui.controls.get(fieldName);
         if (field != null)
             field.setDisabled(false);
     },
 
     //--------------------------------------------------------------------------
     setRequired: function (fieldName, requiredLevel) {
-        var field = PHO_de_Common.Library.getAttribute(fieldName);
+        var field = Xrm.Page.getAttribute(fieldName);
         if (field != null)
             field.setRequiredLevel(requiredLevel);
     },
 
     //--------------------------------------------------------------------------
     hideField: function (fieldName) {
-        var field = PHO_de_Common.Library.getControl(fieldName);
+        var field = Xrm.Page.ui.controls.get(fieldName);
         if (field != null)
             field.setVisible(false);
     },
 
     //--------------------------------------------------------------------------
     showField: function (fieldName) {
-        var field = PHO_de_Common.Library.getControl(fieldName);
+        var field = Xrm.Page.ui.controls.get(fieldName);
         if (field != null)
             field.setVisible(true);
     },
 
     //--------------------------------------------------------------------------
     getFieldValue: function (fieldName) {
-        var field = PHO_de_Common.Library.getAttribute(fieldName);
+        var field = Xrm.Page.getAttribute(fieldName);
         if (field != null)
             return field.getValue();
     },
 
     //--------------------------------------------------------------------------
     setFieldValue: function (fieldName, value) {
-        var field = PHO_de_Common.Library.getAttribute(fieldName);
+        var field = Xrm.Page.getAttribute(fieldName);
         if (field != null)
             field.setValue(value);
     },
 
     //--------------------------------------------------------------------------
     clearFieldValue: function (fieldName) {
-        var field = PHO_de_Common.Library.getAttribute(fieldName);
+        var field = Xrm.Page.getAttribute(fieldName);
         if (field != null)
             field.setValue(null);
     },
 
     //--------------------------------------------------------------------------
     setFocus: function (fieldName) {
-        var field = PHO_de_Common.Library.getControl(fieldName);
+        var field = Xrm.Page.getControl(fieldName);
         if (field != null)
             field.setFocus(true);
     },
 
     //--------------------------------------------------------------------------
     hideSection: function (tabNumber, sectionNumber) {
-        var tab = PHO_de_Common.Library.getTab(tabNumber);
+        var tab = Xrm.Page.ui.tabs.get(tabNumber);
 
         if (tab != null) {
             tab.sections.get(sectionNumber).setVisible(false);
@@ -203,7 +148,7 @@ PHO_de_Common.Library = {
 
     //--------------------------------------------------------------------------
     showSection: function (tabNumber, sectionNumber) {
-        var tab = PHO_de_Common.Library.getTab(tabNumber);
+        var tab = Xrm.Page.ui.tabs.get(tabNumber);
 
         if (tab != null) {
             tab.sections.get(sectionNumber).setVisible(true);
@@ -212,37 +157,35 @@ PHO_de_Common.Library = {
 
     //--------------------------------------------------------------------------
     hideTab: function (tabNumber) {
-        var field = PHO_de_Common.Library.getTab(tabNumber);
+        var field = Xrm.Page.ui.tabs.get(tabNumber);
         if (field != null)
             field.setVisible(false);
     },
 
     //--------------------------------------------------------------------------
     showTab: function (tabNumber) {
-        var field = PHO_de_Common.Library.getTab(tabNumber);
+        var field = Xrm.Page.ui.tabs.get(tabNumber);
         if (field != null)
             field.setVisible(true);
     },
 
     //--------------------------------------------------------------------------
     clearLookup: function (lookupName) {
-        var field = PHO_de_Common.Library.getAttribute(lookupName);
+        var field = Xrm.Page.getAttribute(lookupName);
         if (field != null)
             field.setValue(null);
     },
 
     //--------------------------------------------------------------------------
     setLookupValue: function (lookupName, id, name, entityType) {
-        var field = PHO_de_Common.Library.getAttribute(lookupName);
+        var field = Xrm.Page.getAttribute(lookupName);
         if (field != null)
             field.setValue([{ id: id, name: name, entityType: entityType }]);
     },
 
     //--------------------------------------------------------------------------
     setAttributeSubmitMode: function (id, mode) {
-        var field = PHO_de_Common.Library.getAttribute(id);
-        if (field != null)
-            field.setSubmitMode(mode);
+        Xrm.Page.getAttribute(id).setSubmitMode(mode);;
     },
 
     //--------------------------------------------------------------------------
@@ -253,7 +196,7 @@ PHO_de_Common.Library = {
 
     //--------------------------------------------------------------------------
     setFieldSubmitMode: function (fieldName, mode) {
-        var field = PHO_de_Common.Library.getAttribute(fieldName);
+        var field = Xrm.Page.getAttribute(fieldName);
         if (field != null)
             field.setSubmitMode(mode);
     },
@@ -262,7 +205,7 @@ PHO_de_Common.Library = {
 
     setMoneyMask: function (selector) {
         $("#" + selector).mask("?999999999").focusout(function () {
-            PHO_de_Common.Library.getAttribute(selector).setValue($(this).val());
+            Xrm.Page.getAttribute(selector).setValue($(this).val());
         });
 
     },
@@ -271,7 +214,7 @@ PHO_de_Common.Library = {
     setNumberMask: function (selector, digits) {
         var mask = "999999999999";
         $("#" + selector).mask("?" + mask.substring(0, digits)).focusout(function () {
-            PHO_de_Common.Library.getAttribute(selector).setValue($(this).val());
+            Xrm.Page.getAttribute(selector).setValue($(this).val());
         });
 
     },
@@ -279,43 +222,43 @@ PHO_de_Common.Library = {
     //--------------------------------------------------------------------------
     setPostalCodeMask: function (selector) {
         $("#" + selector).mask("a9a 9a9").focusout(function () {
-            PHO_de_Common.Library.getAttribute(selector).setValue($(this).val());
+            Xrm.Page.getAttribute(selector).setValue($(this).val());
         });
 
-        PHO_de_Common.Library.getAttribute(selector).setValue($("#" + selector).val());
+        Xrm.Page.getAttribute(selector).setValue($("#" + selector).val());
     },
 
     //--------------------------------------------------------------------------
     setZipCodeMask: function (selector) {
         $("#" + selector).mask("?99999").focusout(function () {
-            PHO_de_Common.Library.getAttribute(selector).setValue($(this).val());
+            Xrm.Page.getAttribute(selector).setValue($(this).val());
         });
 
-        PHO_de_Common.Library.getAttribute(selector).setValue($("#" + selector).val());
+        Xrm.Page.getAttribute(selector).setValue($("#" + selector).val());
     },
 
     //--------------------------------------------------------------------------
     setTelephoneMask: function (selector) {
         $("#" + selector).mask("?(999) 999-9999 x99999").focusout(function () {
-            PHO_de_Common.Library.getAttribute(selector).setValue($(this).val().replace(/_/g, ''));
+            Xrm.Page.getAttribute(selector).setValue($(this).val().replace(/_/g, ''));
 
-            var val = PHO_de_Common.Library.getAttribute(selector).getValue();
+            var val = Xrm.Page.getAttribute(selector).getValue();
             if ((val != null) && (val != "() - x")) {
                 if (val.substring(val.length - 1, val.length) == "x") {
-                    PHO_de_Common.Library.getAttribute(selector).setValue(val.slice(0, -1));
+                    Xrm.Page.getAttribute(selector).setValue(val.slice(0, -1));
                 }
             }
         });
 
-        PHO_de_Common.Library.getAttribute(selector).setValue($("#" + selector).val());
+        Xrm.Page.getAttribute(selector).setValue($("#" + selector).val());
     },
     //--------------------------------------------------------------------------
     validateTelephone: function (selector) {
 
-        var val = PHO_de_Common.Library.getAttribute(selector).getValue();
+        var val = Xrm.Page.getAttribute(selector).getValue();
         var regex = /^(?:(?:\+?1\s*(?:[.-]\s*)?)?(?:\(\s*([0-9]1[0-9]|[0-9][0-9]1|[0-9][0-9][0-9])\s*\)|([0-9]1[0-9]|[0-9][0-9]1|[0-9][0-9][0-9]))\s*(?:[.-]\s*)?)?([0-9]1[0-9]|[0-9][0-9]1|[0-9][0-9]{2})\s*(?:[.-]\s*)?([0-9]{4})(?:\s*(?:#|x\.?|ext\.?|extension)\s*(\d+))?$/;
 
-        if (regex.test(PHO_de_Common.Library.getAttribute(selector).getValue()))
+        if (regex.test(Xrm.Page.getAttribute(selector).getValue()))
             return true;
         else
             return false;
@@ -324,10 +267,10 @@ PHO_de_Common.Library = {
     //--------------------------------------------------------------------------
     validatePostalCode: function (selector) {
         var regex = /^[a-zA-Z][0-9][a-zA-Z]\s?[0-9][a-zA-Z][0-9]$/;
-        if (regex.test(PHO_de_Common.Library.getAttribute(selector).getValue()))
+        if (regex.test(Xrm.Page.getAttribute(selector).getValue()))
             return true;
         else {
-            PHO_de_Common.Library.getControl(selector).setFocus();
+            Xrm.Page.ui.controls.get(selector).setFocus();
             return false;
         }
     },
@@ -335,10 +278,10 @@ PHO_de_Common.Library = {
     //--------------------------------------------------------------------------
     validateZipCode: function (selector) {
         var regex = /(^\d{5}$)|(^\d{5}-\d{4}$)$/;
-        if (regex.test(PHO_de_Common.Library.getAttribute(selector).getValue()))
+        if (regex.test(Xrm.Page.getAttribute(selector).getValue()))
             return true;
         else {
-            PHO_de_Common.Library.getControl(selector).setFocus();
+            Xrm.Page.ui.controls.get(selector).setFocus();
             return false;
         }
     },
@@ -346,13 +289,13 @@ PHO_de_Common.Library = {
     //--------------------------------------------------------------------------
     validateIFISCode: function (selector) {
 
-        var val = PHO_de_Common.Library.getAttribute(selector).getValue();
+        var val = Xrm.Page.getAttribute(selector).getValue();
         var regex = /^[\d-]+$/;
 
-        if (regex.test(PHO_de_Common.Library.getAttribute(selector).getValue()))
+        if (regex.test(Xrm.Page.getAttribute(selector).getValue()))
             return true;
         else {
-            PHO_de_Common.Library.getControl(selector).setFocus();
+            Xrm.Page.ui.controls.get(selector).setFocus();
             return false;
         }
     },
@@ -360,13 +303,13 @@ PHO_de_Common.Library = {
     //--------------------------------------------------------------------------
     validateARN: function (selector) {
 
-        var val = PHO_de_Common.Library.getAttribute(selector).getValue();
+        var val = Xrm.Page.getAttribute(selector).getValue();
         var regex = /^[\d]+$/;
 
-        if (regex.test(PHO_de_Common.Library.getAttribute(selector).getValue()))
+        if (regex.test(Xrm.Page.getAttribute(selector).getValue()))
             return true;
         else {
-            PHO_de_Common.Library.getControl(selector).setFocus();
+            Xrm.Page.ui.controls.get(selector).setFocus();
             return false;
         }
     },
@@ -374,52 +317,52 @@ PHO_de_Common.Library = {
     //--------------------------------------------------------------------------
     setMobilePhoneMask: function (selector) {
         $("#" + selector).mask("(999) 999-9999").focusout(function () {
-            PHO_de_Common.Library.getAttribute(selector).setValue($(this).val().replace(/_/g, ''));
+            Xrm.Page.getAttribute(selector).setValue($(this).val().replace(/_/g, ''));
 
-            var val = PHO_de_Common.Library.getAttribute(selector).getValue();
+            var val = Xrm.Page.getAttribute(selector).getValue();
             if (val != null) {
                 if (val.substring(val.length - 1, val.length) == "x") {
-                    PHO_de_Common.Library.getAttribute(selector).setValue(val.slice(0, -1));
+                    Xrm.Page.getAttribute(selector).setValue(val.slice(0, -1));
                 }
             }
         });
-        PHO_de_Common.Library.getAttribute(selector).setValue($("#" + selector).val());
+        Xrm.Page.getAttribute(selector).setValue($("#" + selector).val());
     },
 
     //--------------------------------------------------------------------------
     setFaxMask: function (selector) {
         $("#" + selector).mask("(999) 999-9999").focusout(function () {
-            PHO_de_Common.Library.getAttribute(selector).setValue($(this).val().replace(/_/g, ''));
+            Xrm.Page.getAttribute(selector).setValue($(this).val().replace(/_/g, ''));
 
-            var val = PHO_de_Common.Library.getAttribute(selector).getValue();
+            var val = Xrm.Page.getAttribute(selector).getValue();
             if (val != null) {
                 if (val.substring(val.length - 1, val.length) == "x") {
-                    PHO_de_Common.Library.getAttribute(selector).setValue(val.slice(0, -1));
+                    Xrm.Page.getAttribute(selector).setValue(val.slice(0, -1));
                 }
             }
         });
-        PHO_de_Common.Library.getAttribute(selector).setValue($("#" + selector).val());
+        Xrm.Page.getAttribute(selector).setValue($("#" + selector).val());
     },
 
     //--------------------------------------------------------------------------
     setIFISCodeMask: function (selector) {
         $("#" + selector).mask("?999-999999-9999-999999-999999-9999-9999-9999").focusout(function () {
-            PHO_de_Common.Library.getAttribute(selector).setValue($(this).val());
+            Xrm.Page.getAttribute(selector).setValue($(this).val());
         });
     },
 
     //--------------------------------------------------------------------------
     setARNMask: function (selector) {
         $("#" + selector).mask("?999999999999999").focusout(function () {
-            PHO_de_Common.Library.getAttribute(selector).setValue($(this).val());
+            Xrm.Page.getAttribute(selector).setValue($(this).val());
         });
     },
 
     //--------------------------------------------------------------------------
     setValueAfterMask: function (selector) {
-        if (PHO_de_Common.Library.getAttribute(selector) != null) {
-            if (PHO_de_Common.Library.getAttribute(selector).getValue() != $("#" + selector).val())
-                PHO_de_Common.Library.getAttribute(selector).setValue($("#" + selector).val());
+        if (Xrm.Page.getAttribute(selector) != null) {
+            if (Xrm.Page.getAttribute(selector).getValue() != $("#" + selector).val())
+                Xrm.Page.getAttribute(selector).setValue($("#" + selector).val());
         }
 
     },
@@ -428,11 +371,7 @@ PHO_de_Common.Library = {
     //******************************* End - Show Hide Items ******************
     //--------------------------------------------------------------------------
     getLookupId: function (fieldname) {
-        var attribute = PHO_de_Common.Library.getAttribute(fieldname);
-        if (attribute == null)
-            return null;
-
-        var lookupItem = attribute.getValue();
+        var lookupItem = Xrm.Page.getAttribute(fieldname).getValue();
         var id;
 
         if (lookupItem != null) {
@@ -445,11 +384,7 @@ PHO_de_Common.Library = {
 
     //--------------------------------------------------------------------------
     getLookupNameText: function (fieldname) {
-        var attribute = PHO_de_Common.Library.getAttribute(fieldname);
-        if (attribute == null)
-            return null;
-
-        var lookupItem = attribute.getValue();
+        var lookupItem = Xrm.Page.getAttribute(fieldname).getValue();
         var name;
 
         if (lookupItem != null) {
@@ -627,15 +562,12 @@ PHO_de_Common.Library = {
 
     //--------------------------------------------------------------------------
     disableFormWithAdminOveride: function (enableAdminOverride) {
-        var allAttributes = PHO_de_Common.Library.getAllAttributes();
+        var allAttributes = Xrm.Page.data.entity.attributes.get();
         for (var i in allAttributes) {
-            var myattribute = PHO_de_Common.Library.getEntityAttribute(allAttributes[i].getName());
+            var myattribute = Xrm.Page.data.entity.attributes.get(allAttributes[i].getName());
             var myname = myattribute.getName();
-            if (!enableAdminOverride || myname != "statuscode") {
-                var control = PHO_de_Common.Library.getControl(myname);
-                if (control != null)
-                    control.setDisabled(true);
-            }
+            if (!enableAdminOverride || myname != "statuscode")
+                Xrm.Page.getControl(myname).setDisabled(true);
         }
     },
 
