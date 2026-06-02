@@ -1,12 +1,18 @@
-function form_onload()
+function form_onload(executionContext)
 {
+	var formContext = getFormContext(executionContext);
+	if (!formContext) {
+		return;
+	}
+
 	// default Country to Canada if blank
 	// alert("Setting Country default");
 	try
 	{
 		var nvs_Country = new Array();
 		// alert("Get existing Country value");
-		nvs_Country = Xrm.Page.getAttribute("new_country").getValue();
+		var countryAttr = formContext.getAttribute("new_country");
+		nvs_Country = countryAttr != null ? countryAttr.getValue() : null;
 		
 		if(nvs_Country == null)
 		{
@@ -21,7 +27,9 @@ function form_onload()
 			
 			lookupData[0] = lookupItem;
 			// alert("Assigning Country to Field:");
-			Xrm.Page.getAttribute("new_country").setValue(lookupData);
+			if (countryAttr != null) {
+				countryAttr.setValue(lookupData);
+			}
 		}
 	}
 	catch(err)
@@ -33,7 +41,8 @@ function form_onload()
 	{
 		var nvs_Province = new Array();
 		// alert("Get existing Province value");
-		nvs_Province = Xrm.Page.getAttribute("new_provincestate").getValue();
+		var provinceAttr = formContext.getAttribute("new_provincestate");
+		nvs_Province = provinceAttr != null ? provinceAttr.getValue() : null;
 		
 		if(nvs_Province == null)
 		{
@@ -48,11 +57,25 @@ function form_onload()
 			
 			lookupData[0] = lookupItem;
 			// alert("Assigning Province to Field:");
-			Xrm.Page.getAttribute("new_provincestate").setValue(lookupData);
+			if (provinceAttr != null) {
+				provinceAttr.setValue(lookupData);
+			}
 		}
 	}
 	catch(err)
 	{}
 	
 	// alert("OnLoad Done!");
+}
+
+function getFormContext(executionContext) {
+	if (executionContext && typeof executionContext.getFormContext === "function") {
+		return executionContext.getFormContext();
+	}
+
+	if (executionContext && typeof executionContext.getAttribute === "function" && typeof executionContext.getControl === "function") {
+		return executionContext;
+	}
+
+	return null;
 }
