@@ -5,28 +5,36 @@ if (typeof (de_Education) == "undefined")
 
 de_Education.Library = {
     //--------------------------------------------------------------------------
-    onLoad: function () {
+    onLoad: function (executionContext) {
+        PHO_de_Common.Library.setFormContext(executionContext);
         this.setClearDateRescheduled();
         this.updateTimeTracking();
         this.visibilityUpdates();
     },
 
     //--------------------------------------------------------------------------
-    onSave: function (context) {
+    onSave: function (executionContext) {
 
-        if (Xrm.Page.getAttribute("de_timetrackingenabled").getValue() == 1) {
-            if (Xrm.Page.getAttribute("de_deliverytime").getValue() != null && Xrm.Page.getAttribute("de_duration").getValue() != null) {
+        PHO_de_Common.Library.setFormContext(executionContext);
 
-                if (Xrm.Page.getAttribute("de_deliverytime").getValue() > Xrm.Page.getAttribute("de_duration").getValue()) {
+        var timeTrackingEnabledAttr = PHO_de_Common.Library.getAttribute("de_timetrackingenabled");
+        var deliveryTimeAttr = PHO_de_Common.Library.getAttribute("de_deliverytime");
+        var durationAttr = PHO_de_Common.Library.getAttribute("de_duration");
+
+        if (timeTrackingEnabledAttr != null && timeTrackingEnabledAttr.getValue() == 1) {
+            if (deliveryTimeAttr != null && durationAttr != null && deliveryTimeAttr.getValue() != null && durationAttr.getValue() != null) {
+
+                if (deliveryTimeAttr.getValue() > durationAttr.getValue()) {
                     alert("Delivery Time cannot be greater than Duration.");
-                    context.getEventArgs().preventDefault();
+                    executionContext.getEventArgs().preventDefault();
                 }
             }
         }
     },
 
     //--------------------------------------------------------------------------
-    statuscode_onChange: function () {
+    statuscode_onChange: function (executionContext) {
+        PHO_de_Common.Library.setFormContext(executionContext);
         this.setClearDateRescheduled();
         this.visibilityUpdates();
     },
@@ -35,12 +43,17 @@ de_Education.Library = {
     visibilityUpdates: function () {
 
         var value = PHO_de_Common.Library.getFieldValue("statuscode");
+        var timeTrackingEnabledAttr = PHO_de_Common.Library.getAttribute("de_timetrackingenabled");
+        var preparationTimeControl = PHO_de_Common.Library.getControl("de_preparationtime");
+        var deliveryTimeControl = PHO_de_Common.Library.getControl("de_deliverytime");
 
-        if (Xrm.Page.getAttribute("de_timetrackingenabled").getValue() == 1) {
+        if (timeTrackingEnabledAttr != null && timeTrackingEnabledAttr.getValue() == 1) {
 
             // displaying Preparation and Delivery Time fields
-            Xrm.Page.ui.controls.get("de_preparationtime").setVisible(true); // Preparation Time
-            Xrm.Page.ui.controls.get("de_deliverytime").setVisible(true);  // Delivery Time
+            if (preparationTimeControl != null)
+                preparationTimeControl.setVisible(true); // Preparation Time
+            if (deliveryTimeControl != null)
+                deliveryTimeControl.setVisible(true);  // Delivery Time
 
             // setting mandatory fields
             if (value != null && value == 250000002) // Completed
@@ -55,8 +68,10 @@ de_Education.Library = {
         }
         else {
             // hiding Preparation and Delivery Time fields
-            Xrm.Page.ui.controls.get("de_preparationtime").setVisible(false); // Preparation Time
-            Xrm.Page.ui.controls.get("de_deliverytime").setVisible(false);  // Delivery Time
+            if (preparationTimeControl != null)
+                preparationTimeControl.setVisible(false); // Preparation Time
+            if (deliveryTimeControl != null)
+                deliveryTimeControl.setVisible(false);  // Delivery Time
         }
 
     },
@@ -86,8 +101,8 @@ de_Education.Library = {
     //--------------------------------------------------------------------------
     retrieveMultiple: function (odataSetName, filter, successCallback, errorCallback, _executionObj) {
         _executionObjMultiretrive = _executionObj;
-        var context = Xrm.Page.context;
-        var serverUrl = context.getServerUrl();
+        var globalContext = Xrm.Utility.getGlobalContext();
+        var clientUrl = globalContext.getClientUrl();
         var ODATA_ENDPOINT = "XRMServices/2011/OrganizationData.svc";
         //odataSetName is required, i.e. "AccountSet"   
         if (!odataSetName) {
@@ -96,7 +111,7 @@ de_Education.Library = {
         }
         //Build the URI  
         //var odataUri = serverUrl + ODATA_ENDPOINT + "/" + odataSetName;
-        var odataUri = document.location.protocol + "//" + document.location.host + "/" + context.getOrgUniqueName() + "/" + ODATA_ENDPOINT + "/" + odataSetName;
+        var odataUri = clientUrl + "/" + ODATA_ENDPOINT + "/" + odataSetName;
 
         //If a filter is supplied, append it to the OData URI 
         if (filter) {
@@ -137,11 +152,16 @@ de_Education.Library = {
     //--------------------------------------------------------------------------
     RetrieveEntityRecords: function (data, textStatus, XmlHttpRequest) {
         if (data.length > 0) {
+            var timeTrackingEnabledAttr = PHO_de_Common.Library.getAttribute("de_timetrackingenabled");
+            if (timeTrackingEnabledAttr == null) {
+                return;
+            }
+
             if (data[0].de_Enabled == true) {
-                Xrm.Page.getAttribute("de_timetrackingenabled").setValue(1);
+                timeTrackingEnabledAttr.setValue(1);
             }
             else {
-                Xrm.Page.getAttribute("de_timetrackingenabled").setValue(0);
+                timeTrackingEnabledAttr.setValue(0);
             }
         }
     },
