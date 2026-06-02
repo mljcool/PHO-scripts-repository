@@ -1,12 +1,17 @@
-function PicklistOneOnchange() {
+function PicklistOneOnchange(executionContext) {
+
+    var formContext = getFormContext(executionContext);
+    if (!formContext) {
+        return;
+    }
 
     var picklistOneName = "new_attendancestatus"; //name of the first picklist
     var picklistTwoName = "new_attendancestatusreason";  //name of the picklist with dynamic values
 	
-	var picklistOne = Xrm.Page.getControl(picklistOneName);
+	var picklistOne = formContext.getControl(picklistOneName);
 	var picklistOneAttribute = picklistOne.getAttribute();
 	
-	var picklistTwo = Xrm.Page.getControl(picklistTwoName);
+	var picklistTwo = formContext.getControl(picklistTwoName);
 	var picklistTwoAttribute = picklistTwo.getAttribute();
 		
    	var picklistOneSelectedOption = picklistOneAttribute.getSelectedOption();
@@ -86,4 +91,16 @@ function PicklistOneOnchange() {
         }
     }
 	
+}
+
+function getFormContext(executionContext) {
+	if (executionContext && typeof executionContext.getFormContext === "function") {
+		return executionContext.getFormContext();
+	}
+
+	if (executionContext && typeof executionContext.getAttribute === "function" && typeof executionContext.getControl === "function") {
+		return executionContext;
+	}
+
+	return null;
 }
