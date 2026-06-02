@@ -1,28 +1,33 @@
-function Form_onload() {
+function Form_onload(executionContext) {
+
+	var formContext = getFormContext(executionContext);
+	if (!formContext) {
+		return;
+	}
 
     // Set Organisation or Sub Organisation based upon parent on create form
-   if (crmForm.FormType == 1) {
-        var OrganisationLookUp = Xrm.Page.data.entity.attributes.get("parentaccountid").getValue();
+   if (formContext.ui.getFormType() == 1) {
+		var OrganisationLookUp = formContext.data.entity.attributes.get("parentaccountid").getValue();
         if (OrganisationLookUp != null && OrganisationLookUp != "undefined") {
-            Xrm.Page.data.entity.attributes.get("oahpp_organisationorsuborganisation").setValue(true);
+			formContext.data.entity.attributes.get("oahpp_organisationorsuborganisation").setValue(true);
         }
     }
 
     // Change header image for organisation or sub-organisation
-    if (Xrm.Page.data.entity.attributes.get("oahpp_organisationorsuborganisation").getValue() == false) {
+	if (formContext.data.entity.attributes.get("oahpp_organisationorsuborganisation").getValue() == false) {
       //Xrm.Page.getControl("WebResource_organisationHeader").setSrc("/PHODev/WebResources/oahpp_organisationHeader"); 
       // Change border color of main form area
       $(".ms-crm-Form-Page-Main-cell").css("background-color","#0000FF");
-      var nvs_parentOrganization = Xrm.Page.ui.controls.get("parentaccountid");
+	  var nvs_parentOrganization = formContext.ui.controls.get("parentaccountid");
       nvs_parentOrganization.setVisible(false);
     } 
    else  { 
-       Xrm.Page.getControl("WebResource_organisationHeader").setSrc("/PHODev/WebResources/oahpp_organisationSubHeader"); 
+	   formContext.getControl("WebResource_organisationHeader").setSrc("/PHODev/WebResources/oahpp_organisationSubHeader"); 
        // Hide sub-organisations grid
-       Xrm.Page.ui.tabs.get("subOrganisations").setVisible(false);
+	   formContext.ui.tabs.get("subOrganisations").setVisible(false);
  
        // Hide form common navigation
-       Xrm.Page.ui.navigation.items.get("navSubAccts").setVisible(false);
+	   formContext.ui.navigation.items.get("navSubAccts").setVisible(false);
        // Change border color of main form area
        $(".ms-crm-Form-Page-Main-cell").css("background-color","#0D7B0D");
        }
@@ -30,11 +35,11 @@ function Form_onload() {
 	// alert("Setting Country default");
 	try
 	{
-   if (crmForm.FormType == 1) {
+   if (formContext.ui.getFormType() == 1) {
 
 		var nvs_Country = new Array();
 		// alert("Get existing Country value");
-		nvs_Country = Xrm.Page.getAttribute("oahpp_relatedcountryid").getValue();
+		nvs_Country = formContext.getAttribute("oahpp_relatedcountryid").getValue();
 		
 		if(nvs_Country != null)
 		{
@@ -57,8 +62,8 @@ function Form_onload() {
 			
 			lookupData[0] = lookupItem;
 			// alert("Assigning Country to Field:");
-			Xrm.Page.getAttribute("oahpp_relatedcountryid").setValue(lookupData);
-                                                                Xrm.Page.getAttribute("address1_country").setValue(countryName);
+			formContext.getAttribute("oahpp_relatedcountryid").setValue(lookupData);
+                                                                formContext.getAttribute("address1_country").setValue(countryName);
 		}
                                }
 	}
@@ -71,11 +76,11 @@ function Form_onload() {
 	// alert("Setting Province default");
 	try
 	{
-   if (crmForm.FormType == 1) {
+   if (formContext.ui.getFormType() == 1) {
 
 		var nvs_Province = new Array();
 		// alert("Get existing Province value");
-		nvs_Province = Xrm.Page.getAttribute("oahpp_relatedprovinceid").getValue();
+		nvs_Province = formContext.getAttribute("oahpp_relatedprovinceid").getValue();
 		
 		if(nvs_Province != null)
 		{
@@ -97,8 +102,8 @@ function Form_onload() {
 			
 			lookupData[0] = lookupItem;
 			// alert("Assigning Province to Field:");
-			Xrm.Page.getAttribute("oahpp_relatedprovinceid").setValue(lookupData);
-                                                                Xrm.Page.getAttribute("address1_stateorprovince").setValue(provinceName);
+			formContext.getAttribute("oahpp_relatedprovinceid").setValue(lookupData);
+                                                                formContext.getAttribute("address1_stateorprovince").setValue(provinceName);
 		}
                               }
 	}
@@ -112,27 +117,53 @@ $("#new_editornotes_c").css("color","#FF0000");
  }
 
 // Update address line 1 country from related country entity
-function RelatedCountry_OnChange() {
-   var lookupObject = Xrm.Page.getAttribute("oahpp_relatedcountryid");
+function RelatedCountry_OnChange(executionContext) {
+   var formContext = getFormContext(executionContext);
+   if (!formContext) {
+	  return;
+   }
+
+   var lookupObject = formContext.getAttribute("oahpp_relatedcountryid");
     if (lookupObject != null) {
        var lookUpObjectValue = lookupObject.getValue();
        if ((lookUpObjectValue != null)) {
        var lookuptextvalue = lookUpObjectValue[0].name;
-       Xrm.Page.data.entity.attributes.get("address1_country").setValue(lookuptextvalue);
-       Xrm.Page.getAttribute('oahpp_relatedprovinceid').setValue(null);
-       Xrm.Page.data.entity.attributes.get("address1_stateorprovince").setValue("");
+	   formContext.data.entity.attributes.get("address1_country").setValue(lookuptextvalue);
+	   formContext.getAttribute('oahpp_relatedprovinceid').setValue(null);
+	   formContext.data.entity.attributes.get("address1_stateorprovince").setValue("");
        }
    }
 }
 
 // Update address line 1 province from related province entity
-function RelatedProvince_OnChange() {
-   var lookupObject = Xrm.Page.getAttribute("oahpp_relatedprovinceid");
+function RelatedProvince_OnChange(executionContext) {
+   var formContext = getFormContext(executionContext);
+   if (!formContext) {
+	  return;
+   }
+
+   var lookupObject = formContext.getAttribute("oahpp_relatedprovinceid");
     if (lookupObject != null) {
        var lookUpObjectValue = lookupObject.getValue();
        if ((lookUpObjectValue != null)) {
        var lookuptextvalue = lookUpObjectValue[0].name;
-       Xrm.Page.data.entity.attributes.get("address1_stateorprovince").setValue(lookuptextvalue);
+	   formContext.data.entity.attributes.get("address1_stateorprovince").setValue(lookuptextvalue);
        }
    }
+}
+
+function getFormContext(executionContext) {
+	if (executionContext && typeof executionContext.getFormContext === "function") {
+		return executionContext.getFormContext();
+	}
+
+	if (executionContext && typeof executionContext.getAttribute === "function" && typeof executionContext.getControl === "function") {
+		return executionContext;
+	}
+
+	if (typeof Xrm !== "undefined" && Xrm.Page) {
+		return Xrm.Page;
+	}
+
+	return null;
 }
