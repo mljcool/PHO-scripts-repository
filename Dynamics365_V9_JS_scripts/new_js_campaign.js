@@ -1,15 +1,35 @@
-function CreateAttendancesFlag(){
+function CreateAttendancesFlag(executionContext){
+    var formContext = getFormContext(executionContext);
+    if (!formContext) {
+        return;
+    }
+
 	var d = new Date();
     var n = d.getMilliseconds();
     var s = n.toString();
+    var createAttendancesFlagAttr = formContext.getAttribute("new_createattendancesflag");
 
-    Xrm.Page.getAttribute("new_createattendancesflag").setValue(s);
-    Xrm.Page.getAttribute("new_createattendancesflag").setSubmitMode("always");
-	Xrm.Page.data.entity.save();
+    if (createAttendancesFlagAttr != null) {
+    	createAttendancesFlagAttr.setValue(s);
+    	createAttendancesFlagAttr.setSubmitMode("always");
+    }
+    formContext.data.entity.save();
 	
 	pause(3000);
 	
 	alert("Attendances have been created");
+}
+
+function getFormContext(executionContext) {
+    if (executionContext && typeof executionContext.getFormContext === "function") {
+        return executionContext.getFormContext();
+    }
+
+    if (executionContext && typeof executionContext.getAttribute === "function" && typeof executionContext.getControl === "function") {
+        return executionContext;
+    }
+
+    return null;
 }
 
 function pause(millis){
