@@ -5,36 +5,56 @@ if (typeof (de_Incident) == "undefined")
 
 de_Incident.Library = {
     //--------------------------------------------------------------------------
-    onLoad: function () {
+    onLoad: function (executionContext) {
+
+        PHO_de_Common.Library.setFormContext(executionContext);
 
         this.de_consultationtype_onChange();
         this.visibilityUpdates();
-        var formLbl = Xrm.Page.ui.formSelector.getCurrentItem().getLabel();
+        var formContext = PHO_de_Common.Library.getFormContext();
+        if (!formContext) {
+            return;
+        }
 
-        if (Xrm.Page.ui.getFormType() == 1) {
+        var currentItem = formContext.ui.formSelector.getCurrentItem();
+        var formLbl = currentItem ? currentItem.getLabel() : null;
+
+        if (formContext.ui.getFormType() == 1) {
             if (formLbl == 'IPAC') {
-                Xrm.Page.getAttribute("de_consultationdate").setValue(new Date());
+                var consultationDateAttr = formContext.getAttribute("de_consultationdate");
+                if (consultationDateAttr != null) {
+                    consultationDateAttr.setValue(new Date());
+                }
                 this.setDueDate();
             }
 
             if (formLbl == 'HPCB') {
-                Xrm.Page.getAttribute("de_caseprefix").setValue("HPCB");
+                var hpcbCasePrefixAttr = formContext.getAttribute("de_caseprefix");
+                if (hpcbCasePrefixAttr != null) {
+                    hpcbCasePrefixAttr.setValue("HPCB");
+                }
                 
                 PHO_de_Common.Library.hideField("de_srmorganization");
                 PHO_de_Common.Library.hideField("de_leadid");                
             }
 
             if (formLbl == 'HPCDIP-ES') {
-                Xrm.Page.getAttribute("de_caseprefix").setValue("ES");                
+                var esCasePrefixAttr = formContext.getAttribute("de_caseprefix");
+                if (esCasePrefixAttr != null) {
+                    esCasePrefixAttr.setValue("ES");
+                }
             }
 
             if (formLbl == 'IVPD') {
-                Xrm.Page.getAttribute("de_caseprefix").setValue("IVPD");                
+                var ivpdCasePrefixAttr = formContext.getAttribute("de_caseprefix");
+                if (ivpdCasePrefixAttr != null) {
+                    ivpdCasePrefixAttr.setValue("IVPD");
+                }
             }
                         
             this.setMandatoryFields();
         }
-        else if (Xrm.Page.ui.getFormType() == 2) {
+        else if (formContext.ui.getFormType() == 2) {
             if (formLbl == 'HPCB') {
                 this.showHideLeadContactAccount();                   
             }
@@ -44,7 +64,13 @@ de_Incident.Library = {
     //--------------------------------------------------------------------------
     setMandatoryFields: function () {
 
-        var formLabel = Xrm.Page.ui.formSelector.getCurrentItem().getLabel();
+        var formContext = PHO_de_Common.Library.getFormContext();
+        if (!formContext) {
+            return;
+        }
+
+        var currentItem = formContext.ui.formSelector.getCurrentItem();
+        var formLabel = currentItem ? currentItem.getLabel() : null;
 
         if (formLabel == 'HPCB') {
 
@@ -74,12 +100,23 @@ de_Incident.Library = {
     },
 
     //--------------------------------------------------------------------------
-    de_sector_onChange: function () {
+    de_sector_onChange: function (executionContext) {
 
-        var lbl = Xrm.Page.ui.formSelector.getCurrentItem().getLabel();
+        if (executionContext) {
+            PHO_de_Common.Library.setFormContext(executionContext);
+        }
+
+        var formContext = PHO_de_Common.Library.getFormContext();
+        if (!formContext) {
+            return;
+        }
+
+        var currentItem = formContext.ui.formSelector.getCurrentItem();
+        var lbl = currentItem ? currentItem.getLabel() : null;
 
         if (lbl == 'HPCB') {
-            if (Xrm.Page.getAttribute("de_sector").getValue() == 250000012)
+            var sectorAttr = formContext.getAttribute("de_sector");
+            if (sectorAttr != null && sectorAttr.getValue() == 250000012)
                 PHO_de_Common.Library.setRequired("de_othersector", "required");
             else
                 PHO_de_Common.Library.setRequired("de_othersector", "none");
@@ -88,35 +125,49 @@ de_Incident.Library = {
 
     //--------------------------------------------------------------------------
     setDueDate: function () {
-        var today = Xrm.Page.getAttribute("de_consultationdate").getValue()
+        var consultationDateAttr = PHO_de_Common.Library.getAttribute("de_consultationdate");
+        var followupByAttr = PHO_de_Common.Library.getAttribute("followupby");
+        if (consultationDateAttr == null || followupByAttr == null || consultationDateAttr.getValue() == null) {
+            return;
+        }
+
+        var today = consultationDateAttr.getValue();
         var tomorrow = new Date();
         tomorrow.setDate(today.getDate() + 1);
 
-        Xrm.Page.getAttribute("followupby").setValue(tomorrow);
+        followupByAttr.setValue(tomorrow);
     },
 
     //--------------------------------------------------------------------------
-    de_consultationdate_onChange: function () {
+    de_consultationdate_onChange: function (executionContext) {
+        if (executionContext) {
+            PHO_de_Common.Library.setFormContext(executionContext);
+        }
         this.setDueDate();
     },
 
     //--------------------------------------------------------------------------
-    onSave: function (context) {
+    onSave: function (executionContext) {
         var wod_SaveMode, wod_SaveEventVal;
 
-        if (context != null && context.getEventArgs() != null) {
+        PHO_de_Common.Library.setFormContext(executionContext);
 
-            wod_SaveMode = context.getEventArgs().getSaveMode();
+        if (executionContext != null && executionContext.getEventArgs() != null) {
+
+            wod_SaveMode = executionContext.getEventArgs().getSaveMode();
 
             if (wod_SaveMode == 5) {
 
-                if (Xrm.Page.getAttribute("de_timetrackingenabled").getValue() == 1) {
+                var timeTrackingEnabledAttr = PHO_de_Common.Library.getAttribute("de_timetrackingenabled");
+                var totalTimeAttr = PHO_de_Common.Library.getAttribute("de_totaltime");
+
+                if (timeTrackingEnabledAttr != null && timeTrackingEnabledAttr.getValue() == 1) {
 
                     PHO_de_Common.Library.setRequired("de_totaltime", "required");
 
-                    if (Xrm.Page.getAttribute("de_totaltime").getValue() == 0) {
+                    if (totalTimeAttr != null && totalTimeAttr.getValue() == 0) {
                         alert("Total Time must be greater than 0");
-                        context.getEventArgs().preventDefault();
+                        executionContext.getEventArgs().preventDefault();
                     }
                 }
             }
@@ -124,7 +175,10 @@ de_Incident.Library = {
     },
 
     //--------------------------------------------------------------------------
-    statuscode_onChange: function () {
+    statuscode_onChange: function (executionContext) {
+        if (executionContext) {
+            PHO_de_Common.Library.setFormContext(executionContext);
+        }
         this.visibilityUpdates();
     },
 
@@ -139,8 +193,7 @@ de_Incident.Library = {
     //--------------------------------------------------------------------------
     retrieveMultiple: function (odataSetName, filter, successCallback, errorCallback, _executionObj) {
         _executionObjMultiretrive = _executionObj;
-        var context = Xrm.Page.context;
-        var serverUrl = context.getServerUrl();
+        var clientUrl = Xrm.Utility.getGlobalContext().getClientUrl();
         var ODATA_ENDPOINT = "XRMServices/2011/OrganizationData.svc";
         //odataSetName is required, i.e. "AccountSet"   
         if (!odataSetName) {
@@ -150,7 +203,7 @@ de_Incident.Library = {
         //Build the URI  
         //var odataUri = serverUrl + ODATA_ENDPOINT + "/" + odataSetName;
 
-        var odataUri = document.location.protocol + "//" + document.location.host + "/" + context.getOrgUniqueName() + "/" + ODATA_ENDPOINT + "/" + odataSetName;
+        var odataUri = clientUrl + "/" + ODATA_ENDPOINT + "/" + odataSetName;
 
         //If a filter is supplied, append it to the OData URI 
         if (filter) {
@@ -193,11 +246,17 @@ de_Incident.Library = {
         if (data.length > 0) {
 
             var value = PHO_de_Common.Library.getFieldValue("statuscode");
+            var timeTrackingEnabledAttr = PHO_de_Common.Library.getAttribute("de_timetrackingenabled");
+            var totalTimeControl = PHO_de_Common.Library.getControl("de_totaltime");
+            if (timeTrackingEnabledAttr == null) {
+                return;
+            }
 
             if (data[0].de_Enabled == true) {
-                Xrm.Page.getAttribute("de_timetrackingenabled").setValue(1);
+                timeTrackingEnabledAttr.setValue(1);
                 // displaying Total Time field
-                Xrm.Page.ui.controls.get("de_totaltime").setVisible(true); // Total Time
+                if (totalTimeControl != null)
+                    totalTimeControl.setVisible(true); // Total Time
 
                 // setting mandatory fields
                 if (value != null && value == 5) // Resolved
@@ -206,55 +265,91 @@ de_Incident.Library = {
                     PHO_de_Common.Library.setRequired("de_totaltime", "none");
             }
             else {
-                Xrm.Page.getAttribute("de_timetrackingenabled").setValue(0);
+                timeTrackingEnabledAttr.setValue(0);
                 // hiding Total Time field
-                Xrm.Page.ui.controls.get("de_totaltime").setVisible(false);
+                if (totalTimeControl != null)
+                    totalTimeControl.setVisible(false);
             }
         }
     },
 
     //--------------------------------------------------------------------------
-    de_consultationtype_onChange: function () {
+    de_consultationtype_onChange: function (executionContext) {
 
-        var lbl = Xrm.Page.ui.formSelector.getCurrentItem().getLabel();
+        if (executionContext) {
+            PHO_de_Common.Library.setFormContext(executionContext);
+        }
+
+        var formContext = PHO_de_Common.Library.getFormContext();
+        if (!formContext) {
+            return;
+        }
+
+        var currentItem = formContext.ui.formSelector.getCurrentItem();
+        var lbl = currentItem ? currentItem.getLabel() : null;
 
         if (lbl == 'IPAC') {
 
-            var ct = Xrm.Page.getAttribute("de_consultationtype");
+            var ct = formContext.getAttribute("de_consultationtype");
+            if (ct == null) {
+                return;
+            }
+
+            var tab6 = formContext.ui.tabs.get("tab_6");
+            var firstTab = formContext.ui.tabs.get(0);
+            var responseSection = firstTab ? firstTab.sections.get("general_section_10") : null;
+            var outcomeSection = firstTab ? firstTab.sections.get("tab_4_section_2") : null;
 
             switch (ct.getValue()) {
                 case 250000000: // Inquiry
-                    Xrm.Page.ui.tabs.get("tab_6").setVisible(false); // Consultation Participants
-                    Xrm.Page.ui.tabs.get(0).sections.get("general_section_10").setVisible(true);  // Response
-                    Xrm.Page.ui.tabs.get(0).sections.get("tab_4_section_2").setVisible(false);  // Outcome
+                    if (tab6 != null)
+                        tab6.setVisible(false); // Consultation Participants
+                    if (responseSection != null)
+                        responseSection.setVisible(true);  // Response
+                    if (outcomeSection != null)
+                        outcomeSection.setVisible(false);  // Outcome
                     break;
                 default:
-                    Xrm.Page.ui.tabs.get("tab_6").setVisible(true); // Consultation Participants
-                    Xrm.Page.ui.tabs.get(0).sections.get("general_section_10").setVisible(false);  // Response
-                    Xrm.Page.ui.tabs.get(0).sections.get("tab_4_section_2").setVisible(true);  // Outcome
+                    if (tab6 != null)
+                        tab6.setVisible(true); // Consultation Participants
+                    if (responseSection != null)
+                        responseSection.setVisible(false);  // Response
+                    if (outcomeSection != null)
+                        outcomeSection.setVisible(true);  // Outcome
                     break;
             }
         }
     },
 
     //--------------------------------------------------------------------------
-    de_contact_onChange: function () {
-        var lookupObject = Xrm.Page.getAttribute("de_contactid");
-        var context = Xrm.Page.context;
+    de_contact_onChange: function (executionContext) {
+        if (executionContext) {
+            PHO_de_Common.Library.setFormContext(executionContext);
+        }
+
+        var formContext = PHO_de_Common.Library.getFormContext();
+        if (!formContext) {
+            return;
+        }
+
+        var lookupObject = formContext.getAttribute("de_contactid");
 
         if (lookupObject != null) {
             var lookUpObjectValue = lookupObject.getValue();
 
             // setting customer id
-            Xrm.Page.getAttribute("customerid").setValue(lookUpObjectValue);
+            var customerIdAttr = formContext.getAttribute("customerid");
+            if (customerIdAttr != null) {
+                customerIdAttr.setValue(lookUpObjectValue);
+            }
+
             if ((lookUpObjectValue != null)) {
 
                 if (lookUpObjectValue[0] != null) {
                     var name = lookUpObjectValue[0].name;
                     var guid = lookUpObjectValue[0].id;
                     var entType = lookUpObjectValue[0].entityType;
-                    //var serverUrl = Xrm.Page.context.getServerUrl();
-                    var serverUrl = document.location.protocol + "//" + document.location.host + "/" + context.getOrgUniqueName();
+                    var serverUrl = Xrm.Utility.getGlobalContext().getClientUrl();
                     var odataSelect = serverUrl + "/XRMServices/2011/OrganizationData.svc/ContactSet(guid'" + guid + "')";
                     // alert("ODATA Select: " + odataSelect.toString()); 
 
@@ -266,12 +361,16 @@ de_Incident.Library = {
                         beforeSend: function (XMLHttpRequest) { XMLHttpRequest.setRequestHeader("Accept", "application/json"); },
                         success: function (data, textStatus, XmlHttpRequest) {
                             var org = data.d;
+                            var accountIdAttr = formContext.getAttribute("de_accountid");
+                            if (accountIdAttr == null) {
+                                return;
+                            }
 
                             if (org.ParentCustomerId.Id != null) {
-                                Xrm.Page.getAttribute("de_accountid").setValue([{ id: org.ParentCustomerId.Id, name: org.ParentCustomerId.Name, entityType: "account" }]);
+                                accountIdAttr.setValue([{ id: org.ParentCustomerId.Id, name: org.ParentCustomerId.Name, entityType: "account" }]);
                             }
                             else {
-                                Xrm.Page.getAttribute("de_accountid").setValue(null);
+                                accountIdAttr.setValue(null);
                             }
 
                         },
