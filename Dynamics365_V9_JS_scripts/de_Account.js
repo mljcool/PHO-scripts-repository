@@ -1,8 +1,13 @@
-﻿function Form_onload() {
-   //setPostalCodeMask("address1_postalcode", "a9a 9a9");       
+﻿function Form_onload(executionContext) {
+   //setPostalCodeMask(executionContext, "address1_postalcode", "a9a 9a9");
 }
 
-function CopyAddressToClipboard() {
+function CopyAddressToClipboard(executionContext) {
+
+    var formContext = getFormContext(executionContext);
+    if (!formContext) {
+        return;
+    }
 
     var address1_line1 = "";
     var address1_line2 = "";
@@ -12,46 +17,72 @@ function CopyAddressToClipboard() {
     var address1_postalcode = "";
     var address1_country = "";
 
-    if (Xrm.Page.getAttribute("address1_line1").getValue() != null)
-        var address1_line1 = Xrm.Page.getAttribute("address1_line1").getValue();
+    var address1_line1Attr = formContext.getAttribute("address1_line1");
+    if (address1_line1Attr != null && address1_line1Attr.getValue() != null)
+        address1_line1 = address1_line1Attr.getValue();
 
-    if (Xrm.Page.getAttribute("address1_line2").getValue() != null)
-        var address1_line2 = Xrm.Page.getAttribute("address1_line2").getValue();
+    var address1_line2Attr = formContext.getAttribute("address1_line2");
+    if (address1_line2Attr != null && address1_line2Attr.getValue() != null)
+        address1_line2 = address1_line2Attr.getValue();
 
-    if (Xrm.Page.getAttribute("address1_line3").getValue() != null)
-        var address1_line3 = Xrm.Page.getAttribute("address1_line3").getValue();
+    var address1_line3Attr = formContext.getAttribute("address1_line3");
+    if (address1_line3Attr != null && address1_line3Attr.getValue() != null)
+        address1_line3 = address1_line3Attr.getValue();
 
-    if (Xrm.Page.getAttribute("address1_city").getValue() != null)
-        var address1_city = Xrm.Page.getAttribute("address1_city").getValue();
+    var address1_cityAttr = formContext.getAttribute("address1_city");
+    if (address1_cityAttr != null && address1_cityAttr.getValue() != null)
+        address1_city = address1_cityAttr.getValue();
 
-    if (Xrm.Page.getAttribute("address1_stateorprovince").getValue() != null)
-        var address1_stateorprovince = Xrm.Page.getAttribute("address1_stateorprovince").getValue();
+    var address1_stateorprovinceAttr = formContext.getAttribute("address1_stateorprovince");
+    if (address1_stateorprovinceAttr != null && address1_stateorprovinceAttr.getValue() != null)
+        address1_stateorprovince = address1_stateorprovinceAttr.getValue();
 
-    if (Xrm.Page.getAttribute("address1_postalcode").getValue() != null)
-        var address1_postalcode = Xrm.Page.getAttribute("address1_postalcode").getValue();
+    var address1_postalcodeAttr = formContext.getAttribute("address1_postalcode");
+    if (address1_postalcodeAttr != null && address1_postalcodeAttr.getValue() != null)
+        address1_postalcode = address1_postalcodeAttr.getValue();
 
-    if (Xrm.Page.getAttribute("address1_country").getValue() != null)
-        var address1_country = Xrm.Page.getAttribute("address1_country").getValue();
+    var address1_countryAttr = formContext.getAttribute("address1_country");
+    if (address1_countryAttr != null && address1_countryAttr.getValue() != null)
+        address1_country = address1_countryAttr.getValue();
 
     var sAddress = "\n" +
     address1_line1 + " " + address1_line2 + " " + address1_line3 + " \n" +
     address1_city + ", " + address1_stateorprovince + " " + address1_postalcode + " " + address1_country;
         
-    window.clipboardData.setData("text", sAddress);
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(sAddress).catch(function () {
+            if (window.clipboardData && window.clipboardData.setData) {
+                window.clipboardData.setData("text", sAddress);
+            }
+        });
+    }
+    else if (window.clipboardData && window.clipboardData.setData) {
+        window.clipboardData.setData("text", sAddress);
+    }
    
 }
 
-function setPostalCodeMask(field, format) {
+function setPostalCodeMask(executionContext, field, format) {
     alert("setting mask");
 
+    var formContext = getFormContext(executionContext);
+    if (!formContext) {
+        return;
+    }
 
-    if (Xrm.Page.getAttribute("address1_postalcode").getValue() == null) {
-        Xrm.Page.getAttribute("address1_postalcode").setValue("123");
+    var address1PostalcodeAttr = formContext.getAttribute("address1_postalcode");
+    if (address1PostalcodeAttr != null && address1PostalcodeAttr.getValue() == null) {
+        address1PostalcodeAttr.setValue("123");
 
-        var oCtrl = Xrm.Page.getControl(field);
+        var oCtrl = formContext.getControl(field);
         if (oCtrl != null) {
             oCtrl.setFocus(true);
-            $("#" + field + "_i").mask(format);
+            if (typeof $ === "function") {
+                var fieldSelector = $("#" + field + "_i");
+                if (fieldSelector != null && typeof fieldSelector.mask === "function") {
+                    fieldSelector.mask(format);
+                }
+            }
     }
     }
 
@@ -93,4 +124,17 @@ function setPostalCodeMask(field, format) {
     //}
 
     alert("setting mask - end");
+}
+
+function getFormContext(executionContext) {
+    if (executionContext && typeof executionContext.getFormContext === "function") {
+        return executionContext.getFormContext();
+    }
+
+    // Ribbon commands can pass primaryControl, which is already a form context-like object.
+    if (executionContext && typeof executionContext.getAttribute === "function" && typeof executionContext.getControl === "function") {
+        return executionContext;
+    }
+
+    return null;
 }
