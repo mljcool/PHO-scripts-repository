@@ -1,9 +1,15 @@
-function retrieveContact() {
-    
-    var contact = Xrm.Page.getAttribute("new_existingsrmcontact").getValue();
+function retrieveContact(executionContext) {
+    var formContext = getFormContext(executionContext);
+    if (!formContext) {
+        return;
+    }
+
+    var contactAttr = formContext.getAttribute("new_existingsrmcontact");
+    var contact = contactAttr != null ? contactAttr.getValue() : null;
     if (contact != null) {
         var id = contact[0].id;
         getContactRecord(
+     formContext,
      id,
      "Contact",
      null, null,
@@ -13,87 +19,71 @@ function retrieveContact() {
         
     }
     else {
-        Xrm.Page.getAttribute("new_srmjobtitle").setValue(null);
-        Xrm.Page.getAttribute("new_srmjobtitle").setSubmitMode("always");
-        Xrm.Page.ui.controls.get("new_srmjobtitle").setDisabled(true);
-
-        Xrm.Page.getAttribute("new_srmorganization").setValue(null);
-        Xrm.Page.getAttribute("new_srmorganization").setSubmitMode("always");
-        Xrm.Page.ui.controls.get("new_srmorganization").setDisabled(true);
-
-        Xrm.Page.getAttribute("new_srmemail").setValue(null);
-        Xrm.Page.getAttribute("new_srmemail").setSubmitMode("always");
-        Xrm.Page.ui.controls.get("new_srmemail").setDisabled(true);
-
-        Xrm.Page.getAttribute("new_srmtelephone").setValue(null);
-        Xrm.Page.getAttribute("new_srmtelephone").setSubmitMode("always");
-        Xrm.Page.ui.controls.get("new_srmtelephone").setDisabled(true);
-
-        Xrm.Page.getAttribute("new_srmtelephoneextension").setValue(null);
-        Xrm.Page.getAttribute("new_srmtelephoneextension").setSubmitMode("always");
-        Xrm.Page.ui.controls.get("new_srmtelephoneextension").setDisabled(true);
-
-        Xrm.Page.getAttribute("new_srmcity").setValue(null);
-        Xrm.Page.getAttribute("new_srmcity").setSubmitMode("always");
-        Xrm.Page.ui.controls.get("new_srmcity").setDisabled(true);
-
-        Xrm.Page.getAttribute("new_srmprovince").setValue(null);
-        Xrm.Page.getAttribute("new_srmprovince").setSubmitMode("always");
-        Xrm.Page.ui.controls.get("new_srmprovince").setDisabled(true);
+        setDisabledValue(formContext, "new_srmjobtitle", null);
+        setDisabledValue(formContext, "new_srmorganization", null);
+        setDisabledValue(formContext, "new_srmemail", null);
+        setDisabledValue(formContext, "new_srmtelephone", null);
+        setDisabledValue(formContext, "new_srmtelephoneextension", null);
+        setDisabledValue(formContext, "new_srmcity", null);
+        setDisabledValue(formContext, "new_srmprovince", null);
     }
 }
 
-retrieveCRMObjectCompleted = function (data, textStatus, XmlHttpRequest) {
+retrieveCRMObjectCompleted = function (formContext, data, textStatus, XmlHttpRequest) {
     
-    Xrm.Page.getAttribute("new_srmjobtitle").setValue(data.JobTitle);
-    Xrm.Page.getAttribute("new_srmjobtitle").setSubmitMode("always");
-    Xrm.Page.ui.controls.get("new_srmjobtitle").setDisabled(true);
-
-    Xrm.Page.getAttribute("new_srmorganization").setValue(data.ParentCustomerId.Name);
-    Xrm.Page.getAttribute("new_srmorganization").setSubmitMode("always");
-    Xrm.Page.ui.controls.get("new_srmorganization").setDisabled(true);
-
-    Xrm.Page.getAttribute("new_srmemail").setValue(data.EMailAddress2);
-    Xrm.Page.getAttribute("new_srmemail").setSubmitMode("always");
-    Xrm.Page.ui.controls.get("new_srmemail").setDisabled(true);
-
-    Xrm.Page.getAttribute("new_srmtelephone").setValue(data.Telephone1);
-    Xrm.Page.getAttribute("new_srmtelephone").setSubmitMode("always");
-    Xrm.Page.ui.controls.get("new_srmtelephone").setDisabled(true);
-
-    Xrm.Page.getAttribute("new_srmtelephoneextension").setValue(data.nav_phoneext);
-    Xrm.Page.getAttribute("new_srmtelephoneextension").setSubmitMode("always");
-    Xrm.Page.ui.controls.get("new_srmtelephoneextension").setDisabled(true);
-
-    Xrm.Page.getAttribute("new_srmcity").setValue(data.Address1_City);
-    Xrm.Page.getAttribute("new_srmcity").setSubmitMode("always");
-    Xrm.Page.ui.controls.get("new_srmcity").setDisabled(true);
-
-    Xrm.Page.getAttribute("new_srmprovince").setValue(data.Address1_StateOrProvince);
-    Xrm.Page.getAttribute("new_srmprovince").setSubmitMode("always");
-    Xrm.Page.ui.controls.get("new_srmprovince").setDisabled(true);
+    setDisabledValue(formContext, "new_srmjobtitle", data.JobTitle);
+    setDisabledValue(formContext, "new_srmorganization", data.ParentCustomerId != null ? data.ParentCustomerId.Name : null);
+    setDisabledValue(formContext, "new_srmemail", data.EMailAddress2);
+    setDisabledValue(formContext, "new_srmtelephone", data.Telephone1);
+    setDisabledValue(formContext, "new_srmtelephoneextension", data.nav_phoneext);
+    setDisabledValue(formContext, "new_srmcity", data.Address1_City);
+    setDisabledValue(formContext, "new_srmprovince", data.Address1_StateOrProvince);
 }
 errorRetrieve = function (data, textStatus, XmlHttpRequest) {
     alert("Error Retrieve");
 }
 
-function hideWarning(tab, section) {
-    var contact = Xrm.Page.getAttribute("new_existingsrmcontact").getValue();
+function hideWarning(executionContext, tab, section) {
+    var formContext = getFormContext(executionContext);
+    if (!formContext) {
+        return;
+    }
+
+    var contactAttr = formContext.getAttribute("new_existingsrmcontact");
+    var contact = contactAttr != null ? contactAttr.getValue() : null;
     if (contact != null) {
-        Xrm.Page.ui.tabs.get(tab).sections.get(section).setVisible(false);
+        var targetTab = formContext.ui.tabs.get(tab);
+        if (targetTab != null) {
+            var targetSection = targetTab.sections.get(section);
+            if (targetSection != null) {
+                targetSection.setVisible(false);
+            }
+        }
     }
 }
 
-function hideWarning1(tab, section) {
-    var contact = Xrm.Page.getAttribute("new_existingsrmcontact").getValue();
+function hideWarning1(executionContext, tab, section) {
+    var formContext = getFormContext(executionContext);
+    if (!formContext) {
+        return;
+    }
+
+    var contactAttr = formContext.getAttribute("new_existingsrmcontact");
+    var contact = contactAttr != null ? contactAttr.getValue() : null;
     if (contact != null) {
-        Xrm.Page.ui.tabs.get(tab).sections.get(section).setVisible(false);
+        var targetTab = formContext.ui.tabs.get(tab);
+        if (targetTab != null) {
+            var targetSection = targetTab.sections.get(section);
+            if (targetSection != null) {
+                targetSection.setVisible(false);
+            }
+        }
     }
 }
 
-function getContactRecord(id, type, select, expand, successCallback, errorCallback) {
+function getContactRecord(formContext, id, type, select, expand, successCallback, errorCallback) {
 
-    var serverpath = document.location.protocol + "//" + document.location.host + "/" + Xrm.Page.context.getOrgUniqueName() + "/XRMServices/2011/OrganizationData.svc/";
+    var serverpath = Xrm.Utility.getGlobalContext().getClientUrl() + "/XRMServices/2011/OrganizationData.svc/";
 
     $.ajax({
         type: "GET",
@@ -105,10 +95,39 @@ function getContactRecord(id, type, select, expand, successCallback, errorCallba
             XMLHttpRequest.setRequestHeader("Accept", "application/json");
         },
         success: function (data, textStatus, XmlHttpRequest) {
-            successCallback(data.d, textStatus, XmlHttpRequest)
+            successCallback(formContext, data.d, textStatus, XmlHttpRequest)
         },
         error: function (XmlHttpRequest, textStatus, errorThrown) {
             alert("Error ?" + errorThrown)
         }
     });
+}
+
+function getFormContext(executionContext) {
+    if (executionContext && typeof executionContext.getFormContext === "function") {
+        return executionContext.getFormContext();
+    }
+
+    if (executionContext && typeof executionContext.getAttribute === "function" && typeof executionContext.getControl === "function") {
+        return executionContext;
+    }
+
+    return null;
+}
+
+function setDisabledValue(formContext, attributeName, value) {
+    if (!formContext) {
+        return;
+    }
+
+    var attribute = formContext.getAttribute(attributeName);
+    if (attribute != null) {
+        attribute.setValue(value);
+        attribute.setSubmitMode("always");
+    }
+
+    var control = formContext.getControl(attributeName);
+    if (control != null) {
+        control.setDisabled(true);
+    }
 }
