@@ -1,16 +1,22 @@
-function SetContactAddress(context) {
-    var oField = context.getEventSource().getValue();
+function SetContactAddress(executionContext) {
+    var formContext = getFormContext(executionContext);
+    if (!formContext) {
+        return;
+    }
+
+    var eventSource = executionContext ? executionContext.getEventSource() : null;
+    var oField = eventSource ? eventSource.getValue() : null;
     if (typeof (oField) != "undefined" && oField != null) {
-        getOrganizationAddress(oField[0].id, "AccountSet");
+        getOrganizationAddress(formContext, oField[0].id, "AccountSet");
     }
 }
 
-function getOrganizationAddress(id, odataSetName) {
+function getOrganizationAddress(formContext, id, odataSetName) {
     id = id.replace("{", "");
     id = id.replace("}", "");
 
     // Get Server URL
-    var serverUrl = GetServerUrl();
+    var serverUrl = Xrm.Utility.getGlobalContext().getClientUrl();
 
     //The OData end-point
     var ODATA_ENDPOINT = "/XRMServices/2011/OrganizationData.svc";
@@ -26,7 +32,7 @@ function getOrganizationAddress(id, odataSetName) {
             XMLHttpRequest.setRequestHeader("Accept", "application/json");
         },
         success: function (data, textStatus, XmlHttpRequest) {
-            setAddressValues(data, textStatus, XmlHttpRequest)
+            setAddressValues(formContext, data, textStatus, XmlHttpRequest)
         },
         error: function (XmlHttpRequest, textStatus, errorThrown) {
             alert("Error – " + errorThrown)
@@ -34,15 +40,38 @@ function getOrganizationAddress(id, odataSetName) {
     });
 }
 
-function setAddressValues(data, textStatus, XmlHttpRequest) {
+function setAddressValues(formContext, data, textStatus, XmlHttpRequest) {
     if (data && data.d != null) {
-        Xrm.Page.getAttribute("address1_country").setValue(data.d.Address1_Country);
-        Xrm.Page.getAttribute("address1_stateorprovince").setValue(data.d.Address1_StateOrProvince);
-        Xrm.Page.getAttribute("address1_city").setValue(data.d.Address1_City);
-        Xrm.Page.getAttribute("address1_postalcode").setValue(data.d.Address1_PostalCode);
-        Xrm.Page.getAttribute("address1_line1").setValue(data.d.Address1_Line1);
-        Xrm.Page.getAttribute("address1_line2").setValue(data.d.Address1_Line2);
-        Xrm.Page.getAttribute("address1_line3").setValue(data.d.Address1_Line3);
-        //Xrm.Page.getAttribute("nav_address1_line4").setValue(data.d.new_address1_line4);
+        setAttributeValue(formContext, "address1_country", data.d.Address1_Country);
+        setAttributeValue(formContext, "address1_stateorprovince", data.d.Address1_StateOrProvince);
+        setAttributeValue(formContext, "address1_city", data.d.Address1_City);
+        setAttributeValue(formContext, "address1_postalcode", data.d.Address1_PostalCode);
+        setAttributeValue(formContext, "address1_line1", data.d.Address1_Line1);
+        setAttributeValue(formContext, "address1_line2", data.d.Address1_Line2);
+        setAttributeValue(formContext, "address1_line3", data.d.Address1_Line3);
+        //setAttributeValue(formContext, "nav_address1_line4", data.d.new_address1_line4);
      }
  }
+
+function getFormContext(executionContext) {
+    if (executionContext && typeof executionContext.getFormContext === "function") {
+        return executionContext.getFormContext();
+    }
+
+    if (executionContext && typeof executionContext.getAttribute === "function" && typeof executionContext.getControl === "function") {
+        return executionContext;
+    }
+
+    return null;
+}
+
+function setAttributeValue(formContext, attributeName, value) {
+    if (!formContext) {
+        return;
+    }
+
+    var attribute = formContext.getAttribute(attributeName);
+    if (attribute != null) {
+        attribute.setValue(value);
+    }
+}
