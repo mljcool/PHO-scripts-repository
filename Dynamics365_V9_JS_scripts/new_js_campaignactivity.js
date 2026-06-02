@@ -1,0 +1,3 @@
+function SendAllEmailsFlag(){
+	alert("hi");
+}
