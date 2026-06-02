@@ -1,24 +1,43 @@
-function AutoPopulateName(){
-	var first = GetValue("new_firstname");
-	var last = GetValue("new_lastname");
+function AutoPopulateName(executionContext){
+    var formContext = getFormContext(executionContext);
+    if (!formContext) {
+        return;
+    }
+
+    var first = GetValue(formContext, "new_firstname");
+    var last = GetValue(formContext, "new_lastname");
 	
-	Xrm.Page.getAttribute("new_name").setValue(first + " " + last);
+    var nameAttr = formContext.getAttribute("new_name");
+    if (nameAttr != null) {
+        nameAttr.setValue((first || "") + " " + (last || ""));
+    }
 }
 
-function GetValue(attr) {
-    var val = Xrm.Page.getAttribute(attr).getValue();
-    return val;
+function GetValue(formContext, attr) {
+    if (!formContext) {
+        return null;
+    }
+
+    var attribute = formContext.getAttribute(attr);
+    return attribute != null ? attribute.getValue() : null;
 }
 
-function CreateSRResponseFlag(){
+function CreateSRResponseFlag(executionContext){
+    var formContext = getFormContext(executionContext);
+    if (!formContext) {
+        return;
+    }
 
 	var d = new Date();
     var n = d.getMilliseconds();
     var s = n.toString();
+    var createSrResponseFlagAttr = formContext.getAttribute("new_createsrresponseflag");
 
-    Xrm.Page.getAttribute("new_createsrresponseflag").setValue(s);
-    Xrm.Page.getAttribute("new_createsrresponseflag").setSubmitMode("always");
-	Xrm.Page.data.entity.save();
+    if (createSrResponseFlagAttr != null) {
+    	createSrResponseFlagAttr.setValue(s);
+    	createSrResponseFlagAttr.setSubmitMode("always");
+    }
+    formContext.data.entity.save();
 	
 	//pause(1000);
 	
@@ -33,31 +52,61 @@ function pause(millis){
     while(curtime - time < millis);
 }
 
-function OpenSRResponse(){
-	var srr = Xrm.Page.getAttribute("new_srresponseguid").getValue();
+function OpenSRResponse(executionContext){
+    var formContext = getFormContext(executionContext);
+    if (!formContext) {
+        return;
+    }
+
+    var srResponseGuidAttr = formContext.getAttribute("new_srresponseguid");
+    var deactivateFlagAttr = formContext.getAttribute("new_deactivateflag");
+    var srr = srResponseGuidAttr != null ? srResponseGuidAttr.getValue() : null;
 	
 	if(srr != null){
 //if (Xrm.Utility) alert("good");
 //else alert("bad");
-		Xrm.Utility.openEntityForm("new_servicerequestresponse", srr);
+        Xrm.Navigation.openForm({ entityName: "new_servicerequestresponse", entityId: srr });
 		
-	Xrm.Page.getAttribute("new_srresponseguid").setValue(null);
-	Xrm.Page.getAttribute("new_srresponseguid").setSubmitMode("always");
-	Xrm.Page.getAttribute("new_deactivateflag").setValue(true);
-	Xrm.Page.getAttribute("new_deactivateflag").setSubmitMode("always");
-	Xrm.Page.data.entity.save("saveandclose");
+    if (srResponseGuidAttr != null) {
+        srResponseGuidAttr.setValue(null);
+        srResponseGuidAttr.setSubmitMode("always");
+    }
+    if (deactivateFlagAttr != null) {
+        deactivateFlagAttr.setValue(true);
+        deactivateFlagAttr.setSubmitMode("always");
+    }
+    formContext.data.entity.save("saveandclose");
 	}
 }
 
-function confirmEmailValidation(context) {
-    var firstVal = Xrm.Page.getAttribute("new_email").getValue();
-    var secondVal = Xrm.Page.getAttribute("new_confirmemail").getValue();
+function confirmEmailValidation(executionContext) {
+    var formContext = getFormContext(executionContext);
+    if (!formContext) {
+        return;
+    }
+
+    var firstEmailAttr = formContext.getAttribute("new_email");
+    var confirmEmailAttr = formContext.getAttribute("new_confirmemail");
+    var firstVal = firstEmailAttr != null ? firstEmailAttr.getValue() : null;
+    var secondVal = confirmEmailAttr != null ? confirmEmailAttr.getValue() : null;
 
     if (firstVal != null && firstVal != '' && secondVal != null && secondVal != '') {
         if (firstVal != secondVal) {
             alert("Email and Confirm Email fields must match.");
 
-            context.getEventArgs().preventDefault();
+            executionContext.getEventArgs().preventDefault();
         }
     }
+}
+
+function getFormContext(executionContext) {
+    if (executionContext && typeof executionContext.getFormContext === "function") {
+        return executionContext.getFormContext();
+    }
+
+    if (executionContext && typeof executionContext.getAttribute === "function" && typeof executionContext.getControl === "function") {
+        return executionContext;
+    }
+
+    return null;
 }
