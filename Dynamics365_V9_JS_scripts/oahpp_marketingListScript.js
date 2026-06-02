@@ -1,4 +1,9 @@
-function Form_onload() {
+function Form_onload(executionContext) {
+
+   var formContext = getFormContext(executionContext);
+   if (!formContext) {
+      return;
+   }
 
    // Change marketing list Lookup names
    $("#createdfromcode option[value='1']").text("Organization");
@@ -6,9 +11,25 @@ function Form_onload() {
 
 
    // Set default as Contact
-   if (Xrm.Page.data.entity.attributes.get('createdfromcode').getValue() == null)
+   if (formContext.data.entity.attributes.get('createdfromcode').getValue() == null)
    {
         // Set default view as contacts
-        Xrm.Page.getAttribute('createdfromcode').setValue('2');
+        formContext.getAttribute('createdfromcode').setValue(2);
    }
+}
+
+function getFormContext(executionContext) {
+   if (executionContext && typeof executionContext.getFormContext === "function") {
+      return executionContext.getFormContext();
+   }
+
+   if (executionContext && typeof executionContext.getAttribute === "function" && typeof executionContext.getControl === "function") {
+      return executionContext;
+   }
+
+   if (typeof Xrm !== "undefined" && Xrm.Page) {
+      return Xrm.Page;
+   }
+
+   return null;
 }
