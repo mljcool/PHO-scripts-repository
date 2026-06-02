@@ -22,11 +22,17 @@ function FormatPhoneNumber(context) {
     context.getEventSource().setValue(sTmp);
 }
 
-function validateZipCode() {
+function validateZipCode(formContext) {
+
+    if (!formContext) {
+        return false;
+    }
 
     // Validate Canadian postal code
     var regex = /^[a-zA-Z][0-9][a-zA-Z]\s?[0-9][a-zA-Z][0-9]$/;
-    if (regex.test(Xrm.Page.getAttribute("address1_postalcode").getValue()))
+    var postalCodeAttr = formContext.getAttribute("address1_postalcode");
+    var postalCodeValue = postalCodeAttr != null ? postalCodeAttr.getValue() : null;
+    if (regex.test(postalCodeValue))
         return true;
     else 
         return false;
@@ -54,19 +60,29 @@ function validateZipCode() {
 
 // Function to format postal code
 // for both Canadian and US postal codes
-function FormatPostalCode(context) {
+function FormatPostalCode(executionContext) {
+    var formContext = getFormContext(executionContext);
+    if (!formContext) {
+        return;
+    }
+
+    var context = executionContext;
     var oField = context.getEventSource().getValue();
     var sTmp;
     
-    if (Xrm.Page.getAttribute("address1_country").getValue() != null) {
-        var country = Xrm.Page.getAttribute("address1_country").getValue();
+    var countryAttr = formContext.getAttribute("address1_country");
+    if (countryAttr != null && countryAttr.getValue() != null) {
+        var country = countryAttr.getValue();
 
         if (country.toUpperCase() == "CANADA")
         {
-            var retval = validateZipCode();
+            var retval = validateZipCode(formContext);
             if (retval == false) {
                 alert("Invalid postal code format");
-                Xrm.Page.getAttribute("address1_postalcode").setValue("");
+                var postalCodeAttr = formContext.getAttribute("address1_postalcode");
+                if (postalCodeAttr != null) {
+                    postalCodeAttr.setValue("");
+                }
                 
 
                 //Xrm.Page.getControl("address1_postalcode").setFocus();
@@ -103,15 +119,22 @@ function FormatPostalCode(context) {
     //}
 }
 
-function SetDefaultFields() {
+function SetDefaultFields(executionContext) {
+    var formContext = getFormContext(executionContext);
+    if (!formContext) {
+        return;
+    }
+
     // Function to default country to Canada
-    if (Xrm.Page.getAttribute("address1_country").getValue() == null) {
-        Xrm.Page.getAttribute("address1_country").setValue("Canada");
+    var countryAttr = formContext.getAttribute("address1_country");
+    if (countryAttr != null && countryAttr.getValue() == null) {
+        countryAttr.setValue("Canada");
     }
 
     // Function to default province to Ontario
-    if (Xrm.Page.getAttribute("address1_stateorprovince").getValue() == null) {
-        Xrm.Page.getAttribute("address1_stateorprovince").setValue("Ontario");
+    var stateOrProvinceAttr = formContext.getAttribute("address1_stateorprovince");
+    if (stateOrProvinceAttr != null && stateOrProvinceAttr.getValue() == null) {
+        stateOrProvinceAttr.setValue("Ontario");
     }
 }
 
@@ -121,19 +144,30 @@ function GetServerUrl() {
     if (typeof GetGlobalContext != "undefined") {
         context = GetGlobalContext();
     }
-    else if (typeof Xrm != "undefined") {
-        context = Xrm.Page.context;
+    else if (typeof Xrm != "undefined" && Xrm.Utility && typeof Xrm.Utility.getGlobalContext === "function") {
+        context = Xrm.Utility.getGlobalContext();
     }
     else {
         throw new Error("CRM context is not available.");
     }
 
-    if (context.isOutlookClient() && !context.isOutlookOnline()) {
+    if (typeof context.isOutlookClient === "function" && typeof context.isOutlookOnline === "function" && context.isOutlookClient() && !context.isOutlookOnline()) {
         crmServerUrl = window.location.protocol + "//" + window.location.host;
     } else {
-        crmServerUrl = context.getServerUrl();
-        crmServerUrl = crmServerUrl.replace(/^(http|https):\/\/([_a-zA-Z0-9\-\.]+)(:([0-9]{1,5}))?/, window.location.protocol + "//" + window.location.host);
+        crmServerUrl = typeof context.getClientUrl === "function" ? context.getClientUrl() : context.getServerUrl();
         crmServerUrl = crmServerUrl.replace(/\/$/, ""); // remove trailing slash if any  
     }
     return crmServerUrl;
+}
+
+function getFormContext(executionContext) {
+    if (executionContext && typeof executionContext.getFormContext === "function") {
+        return executionContext.getFormContext();
+    }
+
+    if (executionContext && typeof executionContext.getAttribute === "function" && typeof executionContext.getControl === "function") {
+        return executionContext;
+    }
+
+    return null;
 }
