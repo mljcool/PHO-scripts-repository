@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>PHO / RICNAC Dynamics CRM Solution Architecture</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="header-inner">
+        <p class="eyebrow">Migration Reference Guide</p>
+        <h1>PHO / RICNAC Dynamics CRM Solution Architecture</h1>
+        <p class="lede">
+          Old solution structure guide for understanding the legacy CRM codebase before
+          planning migration work to Dynamics 365 CE / Dataverse.
+        </p>
+        <div class="meta-grid" aria-label="Document metadata">
+          <div>
+            <span>Scope</span>
+            <strong>Architecture, plugins, scripts, reports, assets, and upgrade notes</strong>
+          </div>
+          <div>
+            <span>Workspace</span>
+            <strong>PHO workspace / Codes</strong>
+          </div>
+          <div>
+            <span>Prepared</span>
+            <strong>May 2026</strong>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <nav class="toc" aria-label="Page sections">
+        <a href="#executive-summary">Executive Summary</a>
+        <a href="#architecture-overview">Architecture Overview</a>
+        <a href="#plugins">Plugin Documentation</a>
+        <a href="#javascript">JavaScript Web Resources</a>
+        <a href="#upgrade-notes">Upgrade Notes</a>
+        <a href="#diagrams">High-Level Diagrams</a>
+      </nav>
+
+      <section id="executive-summary" class="section">
+        <div class="section-heading">
+          <p class="section-kicker">01</p>
+          <h2>Executive Summary</h2>
+        </div>
+
+        <div class="summary-grid">
+          <article class="info-panel">
+            <h3>What This Solution Is</h3>
+            <p>
+              A legacy Microsoft Dynamics CRM enterprise customization workspace for
+              PHO / RICNAC. It contains server-side plugin DLLs, CRM form JavaScript
+              web resources, SSRS report definitions, shared CRM helper libraries,
+              test code, and supporting migration/configuration assets.
+            </p>
+          </article>
+
+          <article class="info-panel">
+            <h3>Business / System Purpose</h3>
+            <p>
+              The solution appears to support CRM operations around contacts,
+              organizations/accounts, education, incidents or inquiries, campaigns,
+              attendance, service requests, reporting, and historical migration data.
+            </p>
+          </article>
+
+          <article class="info-panel">
+            <h3>Main Technology Stack</h3>
+            <p>
+              Dynamics CRM SDK assemblies, Microsoft.Xrm.Sdk, C# .NET Framework class
+              libraries, JavaScript Xrm form scripting, SSRS .rdl reports, SQL/Access,
+              CSV/XML/Excel migration files, Visual Studio, MSBuild, and CRM Plugin
+              Registration Tool.
+            </p>
+          </article>
+
+          <article class="info-panel risk">
+            <h3>High-Level Risks</h3>
+            <p>
+              Legacy CRM SDK references, .NET Framework dependencies, SSRS report
+              project limitations, large migration assets, and missing plugin
+              registration metadata that must be confirmed from the source environment.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section id="architecture-overview" class="section">
+        <div class="section-heading">
+          <p class="section-kicker">02</p>
+          <h2>Architecture Overview</h2>
+        </div>
+
+        <p class="section-intro">
+          The old solution is arranged around Dynamics CRM customizations. CRM records
+          sit at the center; client scripts shape form behavior, server-side plugins
+          enforce backend logic, reports consume CRM data, and migration/configuration
+          assets support historical import, export, or deployment tasks.
+        </p>
+
+        <div class="diagram-block">
+          <h3>High-Level CRM Flow</h3>
+          <img
+            src="_doc_assets/logical_solution_structure.png"
+            alt="Logical solution structure showing plugins, JavaScript resources, shared libraries, reports, and migration files connected to the PHO / RICNAC Dynamics CRM solution."
+          >
+        </div>
+
+        <div class="flow-columns">
+          <article>
+            <h3>Server-Side Plugin Flow</h3>
+            <ol>
+              <li>A CRM event such as create, update, assign, or send email is registered as a plugin step.</li>
+              <li>The CRM runtime invokes the plugin assembly and passes <code>IServiceProvider</code> into <code>Execute(...)</code>.</li>
+              <li>The plugin reads <code>IPluginExecutionContext</code>, <code>ITracingService</code>, and <code>IOrganizationService</code>.</li>
+              <li>The plugin validates the target record, performs business logic, and reads or updates CRM records.</li>
+            </ol>
+          </article>
+
+          <article>
+            <h3>Client-Side JavaScript Flow</h3>
+            <ol>
+              <li>A CRM user opens or edits a record form.</li>
+              <li>Entity-specific JavaScript web resources run on form load, field change, or save events.</li>
+              <li>Shared libraries provide helper functions and service access wrappers.</li>
+              <li>When the record is saved, server-side plugins may also execute in the CRM pipeline.</li>
+            </ol>
+          </article>
+
+          <article>
+            <h3>Reporting / Data Migration Flow</h3>
+            <ol>
+              <li><code>RICNACReports</code> contains SSRS <code>.rdl</code> files for operational reporting.</li>
+              <li><code>RICNACFiles</code> contains migration folders, Access databases, XML/CSV/Excel files, templates, site maps, and ZIP archives.</li>
+              <li>Reports and migration files depend on entity schema, field names, relationships, and historical data conventions.</li>
+            </ol>
+          </article>
+        </div>
+
+        <table>
+          <caption>How Components Relate to CRM Records</caption>
+          <thead>
+            <tr>
+              <th>Component</th>
+              <th>Relationship to CRM Records</th>
+              <th>Migration Consideration</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Plugins</td>
+              <td>Run when records are created, updated, or processed.</td>
+              <td>Confirm target event registrations and decide whether plugins should be disabled during bulk migration.</td>
+            </tr>
+            <tr>
+              <td>JavaScript web resources</td>
+              <td>Run on CRM forms before users save data.</td>
+              <td>Review for deprecated <code>Xrm.Page</code> usage and form event compatibility.</td>
+            </tr>
+            <tr>
+              <td>Reports</td>
+              <td>Read CRM data for operational output.</td>
+              <td>Validate data source, query, and security changes in Dataverse.</td>
+            </tr>
+            <tr>
+              <td>Migration assets</td>
+              <td>Represent historical/import data and supporting templates.</td>
+              <td>Classify source data, map entities/fields, and confirm whether assets are still active.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="plugins" class="section">
+        <div class="section-heading">
+          <p class="section-kicker">03</p>
+          <h2>Plugin Documentation</h2>
+        </div>
+
+        <p class="section-intro">
+          Plugin registration step metadata is not fully present in the repository.
+          Where trigger entity is listed, it is inferred from source documentation,
+          source code naming, or class behavior. CRM message and stage should be
+          verified from the source CRM Plugin Registration Tool export.
+        </p>
+
+        <table>
+          <caption>Plugin Assembly Inventory</caption>
+          <thead>
+            <tr>
+              <th>Assembly</th>
+              <th>Main Classes / Scope</th>
+              <th>Dependencies</th>
+              <th>Deployment Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>CRM.Plugin.SequenceGenerator</code></td>
+              <td><code>SequenceGenerator</code>, <code>SequenceHelper</code>. Generates configured sequence or autonumber values for CRM records.</td>
+              <td><code>Microsoft.Xrm.Sdk</code></td>
+              <td>Register per target entity/message. Requires <code>ce_counter</code> configuration records.</td>
+            </tr>
+            <tr>
+              <td><code>OAHPP.Plugins</code></td>
+              <td>Attendance, campaign email/list automation, and service request plugins.</td>
+              <td><code>Microsoft.Xrm.Sdk</code>, <code>Microsoft.Crm.Sdk.Proxy</code></td>
+              <td>Registration steps are not stored in source. SDK DLLs resolve through <code>CrmSdkLibDir</code>.</td>
+            </tr>
+            <tr>
+              <td><code>Digitalembrace.RICNACPlugins</code></td>
+              <td>Main PHO/RICNAC plugin assembly covering account, contact, education, incident, document location, sharing, validation, and helper classes.</td>
+              <td><code>Microsoft.Xrm.Sdk</code>, <code>Microsoft.Crm.Sdk.Proxy</code>, workflow SDK, service references.</td>
+              <td>Signed assembly. Registration/deployment must be confirmed from CRM environment records.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <table>
+          <caption>Known Plugin Classes and Inferred Purpose</caption>
+          <thead>
+            <tr>
+              <th>Assembly / File</th>
+              <th>Trigger Entity</th>
+              <th>Purpose</th>
+              <th>Message / Stage Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>SequenceGenerator.cs</code></td>
+              <td>Dynamic, based on <code>ce_counter.ce_name</code></td>
+              <td>Generates the next sequence value and writes it to the configured target attribute.</td>
+              <td>Not stored in repo. Code checks <code>IsInTransaction</code>.</td>
+            </tr>
+            <tr>
+              <td><code>SequenceHelper.cs</code></td>
+              <td><code>ce_counter</code></td>
+              <td>Reads sequence configuration and persists incremented counter values.</td>
+              <td>Helper class, not directly registered.</td>
+            </tr>
+            <tr>
+              <td><code>AttendanceUpdateSumUpNumAttendances.cs</code></td>
+              <td><code>new_attendance</code></td>
+              <td>Recalculates campaign attendee count based on attendance status filters.</td>
+              <td>Likely create/update, verify registration.</td>
+            </tr>
+            <tr>
+              <td><code>CampaignCreateAttendances.cs</code></td>
+              <td><code>campaign</code></td>
+              <td>Creates attendance records for contacts in campaign-related marketing lists.</td>
+              <td>Verify whether create or update is intended.</td>
+            </tr>
+            <tr>
+              <td><code>CampaignActivitySendAllEmails.cs</code></td>
+              <td><code>campaignactivity</code></td>
+              <td>Sends pending email activities related to a campaign activity.</td>
+              <td>Uses <code>SendEmailRequest</code>.</td>
+            </tr>
+            <tr>
+              <td><code>SRRequestCreateSetName.cs</code></td>
+              <td><code>new_servicerequestform</code></td>
+              <td>Builds <code>new_name</code> from first and last name.</td>
+              <td>Likely pre-operation if target assignment should persist automatically.</td>
+            </tr>
+            <tr>
+              <td><code>SRResponseCreateSearchContact.cs</code></td>
+              <td><code>new_servicerequestresponse</code></td>
+              <td>Finds contact by email and copies contact values into the response.</td>
+              <td>Verify registration.</td>
+            </tr>
+            <tr>
+              <td><code>SRFormUpdateCreateSRResponse.cs</code></td>
+              <td><code>new_servicerequestform</code></td>
+              <td>Creates a service request response record from service request form data.</td>
+              <td>Verify registration.</td>
+            </tr>
+            <tr>
+              <td><code>RICNACPlugins/*.cs</code></td>
+              <td>Account, Contact, Education, Incident, Activity, Campaign Response, Document Location, and related custom entities.</td>
+              <td>Main business logic classes for validation, processing, sharing, naming, activity handling, and helper behavior.</td>
+              <td>Registration/message/stage not stored in repo.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <aside class="callout">
+          <strong>Migration insight:</strong>
+          before migrating or re-registering plugins, export the source CRM plugin
+          registration steps. Source code alone does not prove message, filtering
+          attributes, stage, execution order, impersonating user, configuration, or isolation mode.
+        </aside>
+      </section>
+
+      <section id="javascript" class="section">
+        <div class="section-heading">
+          <p class="section-kicker">04</p>
+          <h2>JavaScript Web Resources</h2>
+        </div>
+
+        <p class="section-intro">
+          The <code>XrmPageJScript</code> project contains JavaScript web resources
+          intended for Dynamics CRM forms. Entity-specific files appear to map to CRM
+          record forms, while shared libraries provide reusable helpers or legacy
+          service access wrappers.
+        </p>
+
+        <table>
+          <caption>JavaScript Resource Inventory</caption>
+          <thead>
+            <tr>
+              <th>JavaScript File</th>
+              <th>Likely CRM Entity/Form</th>
+              <th>Type</th>
+              <th>Purpose / Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><code>de_Account.js</code></td><td>Account</td><td>Entity-specific</td><td>Account form behavior, validation, and field logic.</td></tr>
+            <tr><td><code>de_Common.Library.js</code></td><td>Multiple forms</td><td>Shared library</td><td>Common reusable helper functions for CRM scripts.</td></tr>
+            <tr><td><code>de_CommunicationList.js</code></td><td>Communication List</td><td>Entity-specific</td><td>Communication list form behavior.</td></tr>
+            <tr><td><code>de_Contact.js</code></td><td>Contact</td><td>Entity-specific</td><td>Contact form behavior and validation.</td></tr>
+            <tr><td><code>de_Education.js</code></td><td>Education</td><td>Entity-specific</td><td>Education form behavior.</td></tr>
+            <tr><td><code>de_EventAttendee.js</code></td><td>Event Attendee</td><td>Entity-specific</td><td>Event attendee form behavior.</td></tr>
+            <tr><td><code>de_Incident.js</code></td><td>Incident / Case</td><td>Entity-specific</td><td>Incident or inquiry form behavior.</td></tr>
+            <tr><td><code>de_Incident_Quick.js</code></td><td>Incident quick form</td><td>Entity-specific</td><td>Likely quick-create or compact incident form behavior.</td></tr>
+            <tr><td><code>new_incident_scripts.js</code></td><td>Incident / Case</td><td>Entity-specific</td><td>Additional incident scripting, possibly legacy customizations.</td></tr>
+            <tr><td><code>oahpp_commonJscript.js</code></td><td>Multiple forms</td><td>Shared library</td><td>OAHPP-specific common form utilities.</td></tr>
+            <tr><td><code>XrmPageTemplate.js</code></td><td>Template</td><td>Template/support</td><td>Template for Xrm page scripting patterns.</td></tr>
+            <tr><td><code>XrmServiceToolkit.js</code></td><td>Multiple forms</td><td>Toolkit/vendor-style</td><td>Legacy CRM service access helper; review compatibility during modernization.</td></tr>
+            <tr><td><code>XrmSvcToolkit.js</code></td><td>Multiple forms</td><td>Toolkit/vendor-style</td><td>Legacy CRM service helper; review overlap with XrmServiceToolkit.</td></tr>
+          </tbody>
+        </table>
+
+        <div class="note-list">
+          <h3>Xrm Client API Usage Notes</h3>
+          <ul>
+            <li>Older files may use <code>Xrm.Page</code> or SOAP/OData helper patterns that require review for modern model-driven apps.</li>
+            <li>During migration, confirm each web resource is still referenced by forms, command bars, ribbons, or event handlers.</li>
+            <li>Shared libraries should be loaded before entity-specific scripts when forms depend on common helper functions.</li>
+            <li>For Dynamics 365 CE / Dataverse modernization, validate <code>formContext</code> usage, async API behavior, security role assumptions, and deprecated client methods.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="upgrade-notes" class="section">
+        <div class="section-heading">
+          <p class="section-kicker">05</p>
+          <h2>Upgrade Notes</h2>
+        </div>
+
+        <table>
+          <caption>Projects Upgraded to .NET Framework 4.7.1</caption>
+          <thead>
+            <tr>
+              <th>Project</th>
+              <th>Previous Target</th>
+              <th>Current Target</th>
+              <th>Verification</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><code>CRM.Plugin.SequenceGenerator</code></td><td><code>v4.0</code> / invalid <code>v7.1</code> during review</td><td><code>v4.7.1</code></td><td>Build succeeded.</td></tr>
+            <tr><td><code>Digitalembrace.RICNACLib</code></td><td><code>v4.0</code></td><td><code>v4.7.1</code></td><td>Build succeeded with pre-existing warnings.</td></tr>
+            <tr><td><code>Digitalembrace.RICNACPlugins</code></td><td><code>v4.0</code></td><td><code>v4.7.1</code></td><td>Build succeeded with pre-existing warnings.</td></tr>
+            <tr><td><code>Digitalembrace.RICNACTest</code></td><td><code>v4.0</code></td><td><code>v4.7.1</code></td><td>Build succeeded with pre-existing warnings.</td></tr>
+            <tr><td><code>XrmPageJScript</code></td><td><code>v4.5.1</code></td><td><code>v4.7.1</code></td><td>Build succeeded.</td></tr>
+            <tr><td><code>OAHPP.Plugins</code></td><td><code>v4.0</code></td><td><code>v4.7.1</code></td><td>Build succeeded after CRM SDK reference path fix.</td></tr>
+          </tbody>
+        </table>
+
+        <div class="upgrade-grid">
+          <article>
+            <h3>Why .NET 7 / v7.1 Was Not Correct</h3>
+            <ul>
+              <li><code>TargetFrameworkVersion</code> values such as <code>v4.7.1</code> refer to .NET Framework targets.</li>
+              <li><code>v7.1</code> is not a valid .NET Framework target.</li>
+              <li>.NET 7 uses SDK-style projects with <code>TargetFramework</code> values such as <code>net7.0</code>.</li>
+              <li>Classic Dynamics CRM plugin assemblies are .NET Framework class libraries, not standalone .NET 7 apps.</li>
+            </ul>
+          </article>
+
+          <article>
+            <h3>CRM Compatibility Warnings</h3>
+            <ul>
+              <li>Local build success does not guarantee deployment compatibility with every CRM server version.</li>
+              <li>The target CRM/Dynamics 365 CE environment must support plugin assemblies compiled for .NET Framework 4.7.1.</li>
+              <li>The bundled <code>Microsoft.Xrm.Sdk.dll</code> is version <code>6.0.0.0</code>, indicating an older CRM SDK generation.</li>
+              <li>Plugin behavior may depend on registration metadata not included in source files.</li>
+            </ul>
+          </article>
+
+          <article>
+            <h3>Reference Path Changes</h3>
+            <ul>
+              <li><code>CRM.Plugin.SequenceGenerator</code> resolves <code>Microsoft.Xrm.Sdk.dll</code> from <code>DigitalEmbrace_CRM_Solutions/RICNACLib/lib</code>.</li>
+              <li><code>OAHPP.Plugins</code> uses <code>CrmSdkLibDir</code> for <code>Microsoft.Crm.Sdk.Proxy.dll</code> and <code>Microsoft.Xrm.Sdk.dll</code>.</li>
+              <li><code>RICNACLib</code>, <code>RICNACPlugins</code>, and <code>RICNACTest</code> already used local relative SDK references.</li>
+            </ul>
+          </article>
+
+          <article>
+            <h3>Remaining Technical Debt</h3>
+            <ul>
+              <li>Plugin registration exports are not present in the repository.</li>
+              <li>The full PHO solution does not build cleanly with plain MSBuild because of legacy report/file project entries.</li>
+              <li>Generated service references, old SDK DLLs, and legacy JavaScript toolkit files should be reviewed.</li>
+              <li>Migration assets may contain historical or sensitive data and should be classified before migration.</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section id="diagrams" class="section">
+        <div class="section-heading">
+          <p class="section-kicker">06</p>
+          <h2>High-Level Diagrams</h2>
+        </div>
+
+        <div class="diagram-block">
+          <h3>Logical Folder and Solution Flow</h3>
+          <p>
+            A good first diagram for this project is a high-level CRM solution flow
+            showing how the main folders relate logically: server-side plugins,
+            client-side scripts, shared libraries, reports, and migration/configuration assets.
+          </p>
+          <img
+            src="_doc_assets/logical_solution_structure.png"
+            alt="Logical folder and solution flow diagram."
+          >
+        </div>
+
+        <div class="diagram-block">
+          <h3>Runtime-Oriented Flow</h3>
+          <p>
+            A more runtime-oriented flow shows how a CRM user action moves through
+            form scripts, CRM record operations, plugin execution, SDK calls, and
+            reporting or migration-related outputs.
+          </p>
+          <img
+            src="_doc_assets/runtime_crm_flow.png"
+            alt="Runtime-oriented CRM flow from user action through scripts, record operations, plugins, and CRM data."
+          >
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
