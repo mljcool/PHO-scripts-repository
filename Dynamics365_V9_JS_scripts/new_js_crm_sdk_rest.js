@@ -24,8 +24,8 @@ SDK.REST = {
   if (typeof GetGlobalContext != "undefined")
   { return GetGlobalContext(); }
   else {
-   if (typeof Xrm != "undefined") {
-    return Xrm.Page.context;
+      if (typeof Xrm != "undefined" && Xrm.Utility && typeof Xrm.Utility.getGlobalContext === "function") {
+       return Xrm.Utility.getGlobalContext();
    }
    else
    { throw new Error("Context is not available."); }
@@ -36,7 +36,8 @@ SDK.REST = {
   /// Private function to return the server URL from the context
   ///</summary>
   ///<returns>String</returns>
-  var serverUrl = this._context().getServerUrl()
+      var context = this._context();
+      var serverUrl = typeof context.getClientUrl === "function" ? context.getClientUrl() : context.getServerUrl();
   if (serverUrl.match(/\/$/)) {
    serverUrl = serverUrl.substring(0, serverUrl.length - 1);
   }
